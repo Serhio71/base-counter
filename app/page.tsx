@@ -1,65 +1,119 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useAccount, useWriteContract, useReadContract } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useEffect, useState } from 'react';
+
+const CONTRACT_ADDRESS = '0x17Ce38B8A73e2967B2B4F458dafaA5FaD5c02590';
+
+export default function BaseCounter() {
+  const { isConnected, address } = useAccount();
+  const { writeContract } = useWriteContract();
+  const [count, setCount] = useState(0);
+  const [isClicking, setIsClicking] = useState(false);
+
+  // Builder Code bc_hxdiqjk1
+  const BUILDER_SUFFIX = '0x' + 'bc_hxdiqjk1'.slice(3).padEnd(64, '0');
+
+  const { data: currentCount } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: [{
+      inputs: [{ internalType: "address", name: "player", type: "address" }],
+      name: "getCurrentVibes",
+      outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+      stateMutability: "view",
+      type: "function"
+    }],
+    functionName: 'getCurrentVibes',
+    args: [address!],
+    query: { enabled: !!address },
+  });
+
+  useEffect(() => {
+    if (currentCount !== undefined) {
+      setCount(Number(currentCount));
+    }
+  }, [currentCount]);
+
+  const handleClick = () => {
+    setIsClicking(true);
+    
+    writeContract({
+      address: CONTRACT_ADDRESS,
+      abi: [{
+        inputs: [],
+        name: "click",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function"
+      }],
+      functionName: 'click',
+      dataSuffix: BUILDER_SUFFIX,
+    });
+
+    setTimeout(() => setIsClicking(false), 200);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #4c1d95, #1e3a8a)',
+      color: 'white',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '40px 20px',
+      fontFamily: 'system-ui, sans-serif'
+    }}>
+      <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+        <h1 style={{ fontSize: '52px', fontWeight: '900', letterSpacing: '-2px' }}>
+          BASE COUNTER
+        </h1>
+        <p style={{ opacity: 0.8, fontSize: '20px' }}>on Base • bc_hxdiqjk1</p>
+      </div>
+
+      <ConnectButton />
+
+      {isConnected ? (
+        <div style={{ marginTop: '80px', textAlign: 'center' }}>
+          <div 
+            onClick={handleClick}
+            style={{
+              width: '380px',
+              height: '380px',
+              margin: '0 auto 40px',
+              background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '140px',
+              boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
+              cursor: 'pointer',
+              border: '14px solid rgba(255,255,255,0.6)',
+              transform: isClicking ? 'scale(0.92)' : 'scale(1)',
+              transition: 'transform 0.1s ease'
+            }}
+          >
+            ✨
+          </div>
+
+          <div style={{ fontSize: '48px', fontWeight: 'bold', marginBottom: '10px' }}>
+            {count.toLocaleString()}
+          </div>
+          <p style={{ fontSize: '24px', opacity: 0.9 }}>Ваши клики</p>
+
+          <p style={{ marginTop: '50px', opacity: 0.7 }}>
+            Кликни по шару, чтобы увеличить счёт
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      ) : (
+        <div style={{ marginTop: '100px', textAlign: 'center' }}>
+          <p style={{ fontSize: '32px' }}>Подключи MetaMask</p>
+          <p style={{ fontSize: '20px', opacity: 0.8 }}>на сети Base Sepolia</p>
         </div>
-      </main>
+      )}
     </div>
   );
 }
